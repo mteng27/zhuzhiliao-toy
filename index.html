@@ -1612,6 +1612,12 @@ const shareQrReady = new Promise(resolve => {
   shareQrImage.onerror = resolve;
   shareQrImage.src = 'zhuzhiliao-qr.png';
 });
+const shareCoverImage = new Image();
+const shareCoverReady = new Promise(resolve => {
+  shareCoverImage.onload = resolve;
+  shareCoverImage.onerror = resolve;
+  shareCoverImage.src = 'zhuzhiliao-cover-v3.png';
+});
 let shareCardCanvas = null;
 
 function currentChallengeConfig(){ return CHALLENGE_MODES[selectedChallengeMode]; }
@@ -1799,7 +1805,23 @@ function createShareCardCanvas(){
   ctx.fillStyle = '#f0e6d2';
   ctx.font = '38px "PingFang SC", "Microsoft YaHei", sans-serif';
   ctx.fillText('分', 112, 615);
-  drawShareCicada(930, 480, 3.35);
+  if(shareCoverImage.naturalWidth){
+    ctx.save();
+    ctx.beginPath(); ctx.roundRect(620, 340, 480, 440, 28); ctx.clip();
+    ctx.drawImage(shareCoverImage, 260, 260, 600, 600, 620, 340, 480, 440);
+    ctx.fillStyle = 'rgba(6,11,31,.12)';
+    ctx.fillRect(620, 340, 480, 440);
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(255,207,158,.68)';
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.roundRect(620, 340, 480, 440, 28); ctx.stroke();
+    roundPanel(812, 705, 250, 52, 26, 'rgba(10,16,40,.78)');
+    ctx.fillStyle = '#ffcf9e';
+    ctx.font = '700 24px "PingFang SC", "Microsoft YaHei", sans-serif';
+    ctx.fillText('封面同款 · 竹蝉出没', 838, 739);
+  }else{
+    drawShareCicada(930, 480, 3.35);
+  }
   roundPanel(770, 650, 282, 70, 35, 'rgba(226,96,63,.22)');
   ctx.fillStyle = '#ffcf9e';
   ctx.font = '700 29px "PingFang SC", "Microsoft YaHei", sans-serif';
@@ -1830,7 +1852,7 @@ function createShareCardCanvas(){
   return canvas;
 }
 async function prepareShareCard(){
-  await shareQrReady;
+  await Promise.all([shareQrReady, shareCoverReady]);
   shareCardCanvas = createShareCardCanvas();
   shareEls.image.src = shareCardCanvas.toDataURL();
   shareEls.hint.textContent = '把成绩发给朋友，邀请他来超过你。';
