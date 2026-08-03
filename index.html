@@ -254,8 +254,11 @@
     color:#1b0f0a; background:var(--accent); font:inherit; font-size:13px; letter-spacing:.16em; cursor:pointer; }
   .challenge-body > button:hover{ box-shadow:0 0 20px rgba(226,96,63,.35); }
   .challenge-body > button.secondary{ color:var(--paper); background:rgba(240,230,210,.08); border-color:rgba(240,230,210,.25); }
+  .challenge-body > button.share-challenge-btn{ margin-top:7px; color:#ffcf9e; background:rgba(226,96,63,.08); border-color:rgba(255,207,158,.42); }
   .challenge .source-note{ margin:12px 0 0; padding-top:10px; border-top:1px solid rgba(240,230,210,.13); font-size:10px; line-height:1.65; opacity:.54; }
   .challenge .source-note a{ color:#ffcf9e; pointer-events:auto; }
+  .challenge-invite{ margin-top:7px; padding:7px 9px; color:#ffcf9e; background:rgba(226,96,63,.12); border:1px solid rgba(255,207,158,.24); border-radius:9px; font-size:10px; line-height:1.5; }
+  .challenge-invite b{ font-variant-numeric:tabular-nums; }
   .mode-tabs{ display:grid; grid-template-columns:1fr 1fr; gap:6px; margin:10px 0 8px; }
   .mode-tabs button,.rank-periods button{ border:1px solid rgba(240,230,210,.18); border-radius:999px; padding:6px 4px;
     color:rgba(240,230,210,.66); background:rgba(240,230,210,.06); font:inherit; font-size:10px; letter-spacing:.06em; cursor:pointer; }
@@ -276,6 +279,18 @@
   .my-rank{ margin-top:6px; color:#ffcf9e; font-size:10px; }
   .challenge.complete{ border-color:rgba(255,207,158,.58); }
   .challenge.complete h2{ color:#ffd7a6; }
+  .share-sheet[hidden]{ display:none; }
+  .share-sheet{ position:fixed; inset:0; z-index:20; display:grid; place-items:center; padding:18px; }
+  .share-backdrop{ position:absolute; inset:0; background:rgba(4,7,20,.72); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
+  .share-dialog{ position:relative; width:min(390px, 100%); max-height:calc(100vh - 36px); overflow:auto; padding:18px; color:var(--paper); background:rgba(10,16,40,.96); border:1px solid rgba(255,207,158,.34); border-radius:20px; box-shadow:0 24px 70px rgba(0,0,0,.5); font-family:var(--serif); text-align:center; }
+  .share-close{ position:absolute; top:8px; right:10px; width:32px; height:32px; border:0; border-radius:50%; color:var(--paper); background:rgba(240,230,210,.1); font:24px/1 sans-serif; cursor:pointer; }
+  .share-kicker{ margin:2px 0 3px; color:#ffcf9e; font-size:11px; letter-spacing:.18em; }
+  .share-dialog h2{ margin:0 0 12px; font-size:18px; letter-spacing:.12em; }
+  .share-card-image{ display:block; width:100%; max-height:52vh; object-fit:contain; border-radius:12px; background:#0a1028; box-shadow:0 10px 30px rgba(0,0,0,.28); }
+  .share-actions{ display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:12px; }
+  .share-actions button{ min-height:38px; padding:8px 10px; border:1px solid rgba(240,230,210,.25); border-radius:999px; color:var(--paper); background:rgba(240,230,210,.08); font:inherit; font-size:11px; letter-spacing:.08em; cursor:pointer; }
+  .share-actions button:first-child{ grid-column:1 / -1; color:#1b0f0a; background:var(--accent); border-color:var(--accent); font-size:13px; }
+  .share-hint{ min-height:18px; margin:9px 0 0; color:#ffcf9e; font-size:10px; line-height:1.5; opacity:.8; }
   @media (max-width:640px){
     .masthead{ top:calc(14px + env(safe-area-inset-top)); left:calc(12px + env(safe-area-inset-left)); gap:8px; }
     .masthead h1{ font-size:clamp(25px, 8vw, 34px); letter-spacing:.22em; }
@@ -301,6 +316,7 @@
     .challenge-stat b{ font-size:16px; }
     .challenge-stat span{ font-size:9px; margin-top:2px; }
     .challenge-body > button{ padding:8px 10px; font-size:12px; }
+    .challenge-body > button.share-challenge-btn{ margin-top:5px; }
     .rankbar{ margin-top:7px; font-size:9px; }
     .rank-panel{ margin-top:6px; padding-top:6px; }
     .rank-list{ max-height:220px; }
@@ -409,6 +425,8 @@
       <div class="challenge-stat"><b id="challengeCombo">0</b><span>连击</span></div>
     </div>
     <button id="challengeBtn" type="button">开始经典挑战</button>
+    <button id="shareChallengeBtn" class="secondary share-challenge-btn" type="button" hidden>分享本局战绩</button>
+    <div class="challenge-invite" id="challengeInvite" hidden>好友挑战：超过 <b id="challengeTarget">0</b> 分</div>
     <div class="rankbar"><span id="rankStatus">Toy 排行榜：点击查看</span><button class="rank-toggle" id="rankToggle" type="button">查看排行榜</button></div>
     <section class="rank-panel" id="rankPanel" hidden aria-label="Toy 排行榜">
       <div class="rank-panel-head"><b id="rankTitle">经典榜 · 今日</b><span id="rankSdkStatus">未加载</span></div>
@@ -424,6 +442,22 @@
     <div class="source-note">本 Toy 基于开源项目「竹知了」改编 · 仅保留开源信息<br><a href="https://github.com/imsai-sh/zhuzhiliao" target="_blank" rel="noopener">查看上游 GitHub 项目</a></div>
   </div>
 </aside>
+
+<div class="share-sheet" id="shareSheet" hidden role="dialog" aria-modal="true" aria-labelledby="shareDialogTitle">
+  <div class="share-backdrop" id="shareBackdrop"></div>
+  <section class="share-dialog">
+    <button class="share-close" id="shareClose" type="button" aria-label="关闭分享卡">×</button>
+    <p class="share-kicker">哇声成绩卡</p>
+    <h2 id="shareDialogTitle">来挑战我的成绩</h2>
+    <img class="share-card-image" id="shareCardImage" alt="竹知了挑战成绩卡">
+    <div class="share-actions">
+      <button id="shareAction" type="button">分享战绩</button>
+      <button id="saveShareCard" type="button">保存成绩卡</button>
+      <button id="copyChallengeLink" type="button">复制挑战链接</button>
+    </div>
+    <p class="share-hint" id="shareHint">把成绩发给朋友，邀请他来超过你。</p>
+  </section>
+</div>
 
 <script src="//s1.hdslb.com/bfs/seed/toy/app/sdk/toy-sdk.js"></script>
 <script>
@@ -1526,12 +1560,27 @@ const challengeEls = {
   rankSdkStatus: document.getElementById('rankSdkStatus'),
   rankList: document.getElementById('rankList'),
   myRank: document.getElementById('myRank'),
+  shareButton: document.getElementById('shareChallengeBtn'),
+  invite: document.getElementById('challengeInvite'),
+  inviteTarget: document.getElementById('challengeTarget'),
   rankPeriods: [...document.querySelectorAll('[data-rank-period]')],
 };
 const CHALLENGE_MODES = {
   classic: { label: '经典榜', seconds: 30, board: 1, button: '开始经典挑战' },
   sprint: { label: '极速榜', seconds: 12, board: 2, button: '开始极速挑战' },
 };
+const toyShareLink = 'https://www.bilibili.com/toy/zhuzhiliao/index.html';
+const incomingChallenge = (() => {
+  try{
+    const params = new URLSearchParams(location.search);
+    const score = Number(params.get('challenge'));
+    const mode = params.get('mode');
+    return {
+      score: Number.isFinite(score) && score > 0 ? Math.round(score) : 0,
+      mode: CHALLENGE_MODES[mode] ? mode : 'classic',
+    };
+  }catch(_){ return { score: 0, mode: 'classic' }; }
+})();
 const RANK_PERIOD_LABELS = { day: '今日', week: '本周', month: '本月', all: '总榜' };
 const DAILY_MISSIONS = [
   { text: '甩出 12 哇', done: c => c.wah >= 12 },
@@ -1539,13 +1588,25 @@ const DAILY_MISSIONS = [
   { text: '打出 5 连击', done: c => c.maxCombo >= 5 },
 ];
 const dailyMission = DAILY_MISSIONS[new Date().getUTCDate() % DAILY_MISSIONS.length];
-let selectedChallengeMode = 'classic';
+let selectedChallengeMode = incomingChallenge.mode;
 let rankPeriod = 'day';
 const rankState = { list: [], mine: null, loading: false };
 const challenge = {
   running: false, finished: false, startedAt: 0, baseline: 0, wah: 0,
   maxRps: 0, combo: 0, maxCombo: 0, score: 0, timer: 0, lastWahAt: 0,
+  inviteScore: incomingChallenge.score,
 };
+const shareEls = {
+  sheet: document.getElementById('shareSheet'),
+  backdrop: document.getElementById('shareBackdrop'),
+  close: document.getElementById('shareClose'),
+  image: document.getElementById('shareCardImage'),
+  action: document.getElementById('shareAction'),
+  save: document.getElementById('saveShareCard'),
+  copy: document.getElementById('copyChallengeLink'),
+  hint: document.getElementById('shareHint'),
+};
+let shareCardCanvas = null;
 
 function currentChallengeConfig(){ return CHALLENGE_MODES[selectedChallengeMode]; }
 function reportToyAction(userEventId){
@@ -1583,6 +1644,8 @@ function renderChallenge(){
   challengeEls.combo.textContent = String(challenge.combo);
   challengeEls.mission.textContent = dailyMissionText();
   challengeEls.compact.textContent = `${config.seconds}秒 · ${challenge.wah}哇`;
+  challengeEls.invite.hidden = !challenge.inviteScore;
+  challengeEls.inviteTarget.textContent = fmt(challenge.inviteScore || 0);
 }
 
 function renderLeaderboard(){
@@ -1601,6 +1664,139 @@ function renderLeaderboard(){
     ? `我的排名：第 ${rankState.mine.rank} 名 · ${Number(rankState.mine.score || 0)} 分`
     : '';
   renderCommunityStats();
+}
+
+function shareRankLabel(){
+  return rankState.mine?.ranked ? `当前第 ${rankState.mine.rank} 名` : '成绩待上榜';
+}
+function buildChallengeUrl(){
+  const query = new URLSearchParams();
+  query.set('mode', selectedChallengeMode);
+  query.set('challenge', String(Math.max(0, challenge.score)));
+  return `${toyShareLink}?${query.toString()}`;
+}
+function buildShareText(){
+  const config = currentChallengeConfig();
+  return `我在《竹知了》${config.seconds}秒挑战里转了 ${challenge.wah} 哇，拿到 ${fmt(challenge.score)} 分，${shareRankLabel()}。来超过我：${buildChallengeUrl()}`;
+}
+function createShareCardCanvas(){
+  const canvas = document.createElement('canvas');
+  canvas.width = 1200;
+  canvas.height = 1500;
+  const ctx = canvas.getContext('2d');
+  const config = currentChallengeConfig();
+  const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  gradient.addColorStop(0, '#0b102b');
+  gradient.addColorStop(.58, '#211b43');
+  gradient.addColorStop(1, '#4a2b43');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.globalAlpha = .2;
+  ctx.fillStyle = '#ffcf9e';
+  [[1040,170,180],[180,1160,260],[940,1060,120]].forEach(([x,y,r]) => {
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = 'rgba(255,207,158,.12)';
+  ctx.lineWidth = 18;
+  ctx.beginPath(); ctx.moveTo(100, 0); ctx.bezierCurveTo(210, 380, 35, 800, 155, 1500); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(1030, 0); ctx.bezierCurveTo(930, 460, 1120, 920, 1010, 1500); ctx.stroke();
+  ctx.fillStyle = '#ffcf9e';
+  ctx.font = '700 72px "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.fillText('竹知了', 92, 150);
+  ctx.fillStyle = 'rgba(240,230,210,.72)';
+  ctx.font = '32px "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.fillText(`哇声大作战 · ${config.seconds}秒${config.label.replace('榜', '')}`, 96, 210);
+  ctx.fillStyle = '#ffcf9e';
+  ctx.font = '700 188px "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.fillText(fmt(challenge.score), 92, 500);
+  ctx.fillStyle = 'rgba(240,230,210,.72)';
+  ctx.font = '36px "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.fillText('分', 98, 560);
+  ctx.fillStyle = '#f0e6d2';
+  ctx.font = '42px "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.fillText(`${challenge.wah} 哇`, 96, 720);
+  ctx.fillText(`${challenge.maxRps.toFixed(1)} 圈/秒`, 96, 795);
+  ctx.fillText(`${challenge.maxCombo} 连击`, 96, 870);
+  ctx.fillStyle = '#ffcf9e';
+  ctx.font = '700 44px "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.fillText(shareRankLabel(), 96, 1010);
+  ctx.fillStyle = 'rgba(240,230,210,.76)';
+  ctx.font = '34px "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.fillText('来挑战我的成绩', 96, 1215);
+  ctx.font = '26px "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.fillText('打开 B站 Toy，转出你的下一声“哇”', 96, 1280);
+  ctx.fillStyle = 'rgba(240,230,210,.48)';
+  ctx.font = '24px "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.fillText('bilibili.com/toy/zhuzhiliao', 96, 1400);
+  return canvas;
+}
+function prepareShareCard(){
+  shareCardCanvas = createShareCardCanvas();
+  shareEls.image.src = shareCardCanvas.toDataURL();
+  shareEls.hint.textContent = '把成绩发给朋友，邀请他来超过你。';
+}
+async function copyText(text){
+  try{
+    if(navigator.clipboard?.writeText){
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  }catch(_){ }
+  try{
+    const area = document.createElement('textarea');
+    area.value = text;
+    area.style.position = 'fixed'; area.style.opacity = '0';
+    document.body.appendChild(area);
+    area.select();
+    const copied = document.execCommand('copy');
+    area.remove();
+    return copied;
+  }catch(_){ return false; }
+}
+async function shareChallengeResult(){
+  prepareShareCard();
+  const text = buildShareText();
+  const url = buildChallengeUrl();
+  if(navigator.share){
+    try{
+      const data = { title: '竹知了 · 哇声大作战', text, url };
+      const blob = await new Promise(resolve => shareCardCanvas.toBlob(resolve));
+      if(blob && navigator.canShare){
+        const file = new File([blob], 'zhuzhiliao-challenge.png', { type: blob.type });
+        if(navigator.canShare({ files: [file] })) data.files = [file];
+      }
+      await navigator.share(data);
+      shareEls.hint.textContent = '分享面板已打开，等朋友来挑战。';
+      reportToyAction('zhuzhiliao_share');
+      return;
+    }catch(error){
+      if(error?.name === 'AbortError') return;
+    }
+  }
+  const copied = await copyText(`${text}\n${url}`);
+  shareEls.hint.textContent = copied ? '挑战文案和链接已复制，去聊天窗口粘贴吧。' : '请长按成绩卡保存，再复制页面链接分享。';
+  reportToyAction('zhuzhiliao_share_copy');
+}
+function openShareCard(){
+  if(!challenge.finished) return;
+  prepareShareCard();
+  shareEls.sheet.hidden = false;
+  document.body.style.overflow = 'hidden';
+  reportToyAction('zhuzhiliao_share_open');
+}
+function closeShareCard(){
+  shareEls.sheet.hidden = true;
+  document.body.style.overflow = '';
+}
+function saveShareCard(){
+  if(!shareCardCanvas) prepareShareCard();
+  const link = document.createElement('a');
+  link.href = shareCardCanvas.toDataURL();
+  link.download = `zhuzhiliao-${selectedChallengeMode}-${challenge.score}.png`;
+  link.click();
+  shareEls.hint.textContent = '成绩卡已生成，手机上可长按图片保存。';
+  reportToyAction('zhuzhiliao_share_save');
 }
 
 function renderCommunityStats(){
@@ -1711,6 +1907,7 @@ function finishChallenge(){
   challengeEls.text.textContent = `本局 ${challenge.wah} 哇 · 最高 ${challenge.maxRps.toFixed(1)} 圈/秒 · ${challenge.maxCombo} 连击。${missionDone ? '今日秘令完成！' : '今日秘令还差一点，下局继续。'}`;
   challengeEls.button.disabled = false;
   challengeEls.button.textContent = '再来一局';
+  challengeEls.shareButton.hidden = false;
   reportToyAction(`zhuzhiliao_finish_${selectedChallengeMode}`);
   renderChallenge();
   void submitChallengeScore();
@@ -1729,6 +1926,7 @@ function selectChallengeMode(mode){
   selectedChallengeMode = mode;
   challenge.finished = false;
   challenge.wah = 0; challenge.combo = 0; challenge.score = 0;
+  challenge.inviteScore = mode === incomingChallenge.mode ? incomingChallenge.score : 0;
   challengeEls.modeTabs.forEach(button => button.classList.toggle('active', button.dataset.challengeMode === mode));
   challengeEls.title.textContent = '哇声大作战';
   challengeEls.text.textContent = '手动画圈，甩出越多“哇”分越高。连续转动会触发连击奖励。';
@@ -1749,8 +1947,11 @@ function startChallenge(){
   challenge.baseline = myWah;
   challenge.wah = 0; challenge.maxRps = 0; challenge.combo = 0; challenge.maxCombo = 0; challenge.score = 0; challenge.lastWahAt = 0;
   challengeEls.root.classList.remove('complete');
+  challengeEls.shareButton.hidden = true;
   challengeEls.title.textContent = `${currentChallengeConfig().label} · 进行中`;
-  challengeEls.text.textContent = '现在开始画圈！只有手动甩出的整圈才计分，连续节奏会触发连击奖励。';
+  challengeEls.text.textContent = challenge.inviteScore
+    ? `现在开始画圈！超过 ${fmt(challenge.inviteScore)} 分就赢过好友。只有手动甩出的整圈才计分。`
+    : '现在开始画圈！只有手动甩出的整圈才计分，连续节奏会触发连击奖励。';
   challengeEls.button.disabled = true;
   challengeEls.button.textContent = '挑战进行中…';
   reportToyAction(`zhuzhiliao_start_${selectedChallengeMode}`);
@@ -1765,6 +1966,7 @@ challengeEls.toggle.addEventListener('click', e => {
 });
 challengeEls.modeTabs.forEach(button => button.addEventListener('click', e => { e.stopPropagation(); selectChallengeMode(button.dataset.challengeMode); }));
 challengeEls.button.addEventListener('click', e => { e.stopPropagation(); if(!challenge.running) startChallenge(); });
+challengeEls.shareButton.addEventListener('click', e => { e.stopPropagation(); openShareCard(); });
 challengeEls.rankToggle.addEventListener('click', e => {
   e.stopPropagation();
   challengeEls.rankPanel.hidden = !challengeEls.rankPanel.hidden;
@@ -1777,6 +1979,18 @@ challengeEls.rankPeriods.forEach(button => button.addEventListener('click', e =>
   renderLeaderboard();
   if(!challengeEls.rankPanel.hidden) void loadLeaderboard();
 }));
+shareEls.close.addEventListener('click', closeShareCard);
+shareEls.backdrop.addEventListener('click', closeShareCard);
+shareEls.action.addEventListener('click', shareChallengeResult);
+shareEls.save.addEventListener('click', saveShareCard);
+shareEls.copy.addEventListener('click', async () => {
+  const copied = await copyText(`${buildShareText()}\n${buildChallengeUrl()}`);
+  shareEls.hint.textContent = copied ? '挑战文案和链接已复制，去聊天窗口粘贴吧。' : '复制失败，请长按页面链接分享。';
+  reportToyAction('zhuzhiliao_share_copy');
+});
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && !shareEls.sheet.hidden) closeShareCard(); });
+challengeEls.modeTabs.forEach(button => button.classList.toggle('active', button.dataset.challengeMode === selectedChallengeMode));
+challengeEls.button.textContent = currentChallengeConfig().button;
 renderChallenge();
 renderLeaderboard();
 setChallengeExpanded(!window.matchMedia?.('(max-width: 640px)').matches);
