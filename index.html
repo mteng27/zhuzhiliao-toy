@@ -1606,6 +1606,12 @@ const shareEls = {
   copy: document.getElementById('copyChallengeLink'),
   hint: document.getElementById('shareHint'),
 };
+const shareQrImage = new Image();
+const shareQrReady = new Promise(resolve => {
+  shareQrImage.onload = resolve;
+  shareQrImage.onerror = resolve;
+  shareQrImage.src = 'zhuzhiliao-qr.png';
+});
 let shareCardCanvas = null;
 
 function currentChallengeConfig(){ return CHALLENGE_MODES[selectedChallengeMode]; }
@@ -1817,9 +1823,14 @@ function createShareCardCanvas(){
   ctx.fillStyle = 'rgba(240,230,210,.38)';
   ctx.font = '22px "PingFang SC", "Microsoft YaHei", sans-serif';
   ctx.fillText('bilibili.com/toy/zhuzhiliao', 76, 1430);
+  if(shareQrImage.naturalWidth){
+    roundPanel(875, 1225, 240, 240, 20, '#f8f0db');
+    ctx.drawImage(shareQrImage, 900, 1250, 190, 190);
+  }
   return canvas;
 }
-function prepareShareCard(){
+async function prepareShareCard(){
+  await shareQrReady;
   shareCardCanvas = createShareCardCanvas();
   shareEls.image.src = shareCardCanvas.toDataURL();
   shareEls.hint.textContent = '把成绩发给朋友，邀请他来超过你。';
@@ -1843,7 +1854,7 @@ async function copyText(text){
   }catch(_){ return false; }
 }
 async function shareChallengeResult(){
-  prepareShareCard();
+  await prepareShareCard();
   const text = buildShareText();
   const url = buildChallengeUrl();
   if(navigator.share){
@@ -1866,9 +1877,9 @@ async function shareChallengeResult(){
   shareEls.hint.textContent = copied ? '挑战文案和链接已复制，去聊天窗口粘贴吧。' : '请长按成绩卡保存，再复制页面链接分享。';
   reportToyAction('zhuzhiliao_share_copy');
 }
-function openShareCard(){
+async function openShareCard(){
   if(!challenge.finished) return;
-  prepareShareCard();
+  await prepareShareCard();
   shareEls.sheet.hidden = false;
   document.body.style.overflow = 'hidden';
   reportToyAction('zhuzhiliao_share_open');
@@ -1877,8 +1888,8 @@ function closeShareCard(){
   shareEls.sheet.hidden = true;
   document.body.style.overflow = '';
 }
-function saveShareCard(){
-  if(!shareCardCanvas) prepareShareCard();
+async function saveShareCard(){
+  if(!shareCardCanvas) await prepareShareCard();
   const link = document.createElement('a');
   link.href = shareCardCanvas.toDataURL();
   link.download = `zhuzhiliao-${selectedChallengeMode}-${challenge.score}.png`;
