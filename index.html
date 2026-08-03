@@ -1677,7 +1677,15 @@ function buildChallengeUrl(){
 }
 function buildShareText(){
   const config = currentChallengeConfig();
-  return `我在《竹知了》${config.seconds}秒挑战里转了 ${challenge.wah} 哇，拿到 ${fmt(challenge.score)} 分，${shareRankLabel()}。来超过我：${buildChallengeUrl()}`;
+  return `我在《竹知了》${config.seconds}秒挑战里转了 ${challenge.wah} 哇，${shareMemeLine()} 拿到 ${fmt(challenge.score)} 分，${shareRankLabel()}。来超过我：${buildChallengeUrl()}`;
+}
+function shareMemeLine(){
+  if(challenge.inviteScore && challenge.score > challenge.inviteScore) return '这局已经把好友甩在身后了！';
+  if(challenge.score >= 10000) return '不是我在转，是排行榜在抖！';
+  if(challenge.wah >= 30) return '这声哇，隔着屏幕都听见了！';
+  if(challenge.maxCombo >= 8) return '连击一响，手感就上来了！';
+  if(challenge.maxRps >= 3.2) return '手速有点东西，竹蝉都起飞了！';
+  return '先转一圈，下一声哇你来接！';
 }
 function createShareCardCanvas(){
   const canvas = document.createElement('canvas');
@@ -1744,39 +1752,71 @@ function createShareCardCanvas(){
     });
     ctx.restore();
   };
-  drawShareCicada(950, 360, 3.15);
   ctx.strokeStyle = 'rgba(255,207,158,.12)';
   ctx.lineWidth = 18;
   ctx.beginPath(); ctx.moveTo(100, 0); ctx.bezierCurveTo(210, 380, 35, 800, 155, 1500); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(1030, 0); ctx.bezierCurveTo(930, 460, 1120, 920, 1010, 1500); ctx.stroke();
+  const roundPanel = (x, y, w, h, radius, color) => {
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.roundRect(x, y, w, h, radius); ctx.fill();
+  };
+  const statChip = (x, label, value) => {
+    roundPanel(x, 895, 320, 112, 22, 'rgba(240,230,210,.09)');
+    ctx.fillStyle = 'rgba(240,230,210,.58)';
+    ctx.font = '24px "PingFang SC", "Microsoft YaHei", sans-serif';
+    ctx.fillText(label, x + 26, 934);
+    ctx.fillStyle = '#ffcf9e';
+    ctx.font = '700 38px "PingFang SC", "Microsoft YaHei", sans-serif';
+    ctx.fillText(value, x + 26, 980);
+  };
+  const badgeText = challenge.inviteScore && challenge.score > challenge.inviteScore ? '好友挑战 · 已拿下' : '本局战报';
+  roundPanel(72, 72, 300, 58, 29, '#e2603f');
+  ctx.fillStyle = '#1b0f0a';
+  ctx.font = '700 25px "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.fillText('竹知了 · 哇声战报', 100, 110);
   ctx.fillStyle = '#ffcf9e';
-  ctx.font = '700 72px "PingFang SC", "Microsoft YaHei", sans-serif';
-  ctx.fillText('竹知了', 92, 150);
+  ctx.font = '700 68px "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.fillText('哇！', 72, 220);
   ctx.fillStyle = 'rgba(240,230,210,.72)';
-  ctx.font = '32px "PingFang SC", "Microsoft YaHei", sans-serif';
-  ctx.fillText(`哇声大作战 · ${config.seconds}秒${config.label.replace('榜', '')}`, 96, 210);
+  ctx.font = '30px "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.fillText(`${config.seconds}秒${config.label.replace('榜', '')} · ${badgeText}`, 78, 266);
+  roundPanel(72, 310, 1056, 510, 38, 'rgba(7,12,34,.48)');
+  ctx.strokeStyle = 'rgba(255,207,158,.28)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.roundRect(72, 310, 1056, 510, 38); ctx.stroke();
+  ctx.fillStyle = 'rgba(240,230,210,.62)';
+  ctx.font = '25px "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.fillText('本局哇力值', 112, 370);
   ctx.fillStyle = '#ffcf9e';
-  ctx.font = '700 188px "PingFang SC", "Microsoft YaHei", sans-serif';
-  ctx.fillText(fmt(challenge.score), 92, 500);
-  ctx.fillStyle = 'rgba(240,230,210,.72)';
-  ctx.font = '36px "PingFang SC", "Microsoft YaHei", sans-serif';
-  ctx.fillText('分', 98, 560);
+  ctx.font = '700 172px "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.fillText(fmt(challenge.score), 105, 555);
   ctx.fillStyle = '#f0e6d2';
-  ctx.font = '42px "PingFang SC", "Microsoft YaHei", sans-serif';
-  ctx.fillText(`${challenge.wah} 哇`, 96, 720);
-  ctx.fillText(`${challenge.maxRps.toFixed(1)} 圈/秒`, 96, 795);
-  ctx.fillText(`${challenge.maxCombo} 连击`, 96, 870);
+  ctx.font = '38px "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.fillText('分', 112, 615);
+  drawShareCicada(930, 480, 3.35);
+  roundPanel(770, 650, 282, 70, 35, 'rgba(226,96,63,.22)');
   ctx.fillStyle = '#ffcf9e';
-  ctx.font = '700 44px "PingFang SC", "Microsoft YaHei", sans-serif';
-  ctx.fillText(shareRankLabel(), 96, 1010);
-  ctx.fillStyle = 'rgba(240,230,210,.76)';
-  ctx.font = '34px "PingFang SC", "Microsoft YaHei", sans-serif';
-  ctx.fillText('来挑战我的成绩', 96, 1215);
+  ctx.font = '700 29px "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.fillText('竹蝉出没 · 哇！', 802, 694);
+  statChip(72, '本局', `${challenge.wah} 哇`);
+  statChip(440, '最高速度', `${challenge.maxRps.toFixed(1)} 圈/秒`);
+  statChip(808, '连击', `${challenge.maxCombo} 次`);
+  roundPanel(72, 1045, 1056, 168, 28, 'rgba(226,96,63,.16)');
+  ctx.fillStyle = '#ffcf9e';
+  ctx.font = '700 32px "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.fillText(shareMemeLine(), 108, 1105);
+  ctx.fillStyle = 'rgba(240,230,210,.68)';
+  ctx.font = '27px "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.fillText(`${shareRankLabel()} · 来挑战我的成绩`, 108, 1165);
+  ctx.fillStyle = '#f0e6d2';
+  ctx.font = '700 40px "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.fillText('你能转出更响的一声吗？', 72, 1310);
+  ctx.fillStyle = 'rgba(240,230,210,.56)';
   ctx.font = '26px "PingFang SC", "Microsoft YaHei", sans-serif';
-  ctx.fillText('打开 B站 Toy，转出你的下一声“哇”', 96, 1280);
-  ctx.fillStyle = 'rgba(240,230,210,.48)';
-  ctx.font = '24px "PingFang SC", "Microsoft YaHei", sans-serif';
-  ctx.fillText('bilibili.com/toy/zhuzhiliao', 96, 1400);
+  ctx.fillText('打开 B站 Toy · 直接开转 · 争一口气', 76, 1365);
+  ctx.fillStyle = 'rgba(240,230,210,.38)';
+  ctx.font = '22px "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.fillText('bilibili.com/toy/zhuzhiliao', 76, 1430);
   return canvas;
 }
 function prepareShareCard(){
